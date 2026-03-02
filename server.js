@@ -236,7 +236,13 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files (but index.html won't override the route above)
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
-const server = app.listen(PORT, () => {
+// Bind explicitly to 0.0.0.0 (IPv4 wildcard).
+// Without this, Node.js on Alpine Linux may default to listening only on the
+// IPv6 loopback (::1), which prevents Traefik from reaching the container
+// when it resolves the Docker service address as an IPv4 address, and vice
+// versa. Explicit '0.0.0.0' is the correct choice for a container behind a
+// reverse proxy: the proxy always connects via the Docker bridge IPv4 address.
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running at http://localhost:${PORT}`);
   console.log(`Sender page: http://localhost:${PORT}/sender`);
   console.log(`Receiver page: http://localhost:${PORT}/receiver`);
