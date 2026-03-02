@@ -869,6 +869,37 @@ switchRoleBtn.addEventListener('click', () => {
     }
 });
 
+// Clear all locally stored data (IndexedDB + localStorage) so the user can
+// start fresh without stale cached files or a stuck role assignment.
+async function clearStorageAndCache() {
+    const btn = document.getElementById('clearCacheBtn');
+    const status = document.getElementById('clearCacheStatus');
+    btn.disabled = true;
+    status.textContent = 'Clearing…';
+
+    // 1. Remove all p2p localStorage keys
+    ['p2p_selected_files', 'p2p_role', 'p2p_cached_file'].forEach(k => localStorage.removeItem(k));
+
+    // 2. Close the open IndexedDB handle before deleting (required by spec)
+    if (db) {
+        db.close();
+        db = null;
+    }
+
+    // 3. Delete the whole IndexedDB database
+    await new Promise((resolve) => {
+        const req = indexedDB.deleteDatabase('p2p-file-transfer');
+        req.onsuccess = resolve;
+        req.onerror = resolve;   // proceed even on error
+        req.onblocked = resolve; // proceed even if another tab has it open
+    });
+
+    status.textContent = 'Done — reloading…';
+    setTimeout(() => location.reload(), 800);
+}
+
+document.getElementById('clearCacheBtn').addEventListener('click', clearStorageAndCache);
+
 // Stop functionality
 function stopSender() {
     console.log('Stopping sender operations...');
