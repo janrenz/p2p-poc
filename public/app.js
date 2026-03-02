@@ -2266,7 +2266,10 @@ function createReceiverPeer() {
         const wasActive = transferActive && fileMetadata && totalReceived > 0 && totalReceived < fileMetadata.size;
         isConnected = false;
         transferActive = false;
-        
+        // Clear peer reference so the auto-connect guard (!peer) in the
+        // network-status handler allows a fresh connection attempt.
+        peer = null;
+
         // Clear keep-alive interval
         if (window.keepAliveInterval) {
             clearInterval(window.keepAliveInterval);
@@ -2277,11 +2280,11 @@ function createReceiverPeer() {
             const fileSizeMB = parseFloat((fileMetadata.size / 1024 / 1024).toFixed(2));
             const receivedMB = (totalReceived / 1024 / 1024).toFixed(2);
             const progressPercent = parseFloat(((totalReceived / fileMetadata.size) * 100).toFixed(1));
-            
+
             let errorMsg = `<strong>Connection closed unexpectedly during transfer</strong><br><br>`;
             errorMsg += `<strong>Transfer details:</strong><br>`;
             errorMsg += `• Received: ${receivedMB} MB / ${fileSizeMB.toFixed(2)} MB (${progressPercent.toFixed(1)}%)<br><br>`;
-            
+
             if (fileSizeMB > 1000) {
                 errorMsg += '<strong>Likely cause: Large file timeout</strong><br>';
                 errorMsg += `The file is very large (${fileSizeMB.toFixed(2)} MB) and may have exceeded limits:<br>`;
@@ -2742,7 +2745,10 @@ function handleOffer(offer) {
         const wasActive = transferActive && fileMetadata && totalReceived > 0 && totalReceived < fileMetadata.size;
         isConnected = false;
         transferActive = false;
-        
+        // Clear peer reference so the auto-connect guard (!peer) in the
+        // network-status handler allows a fresh connection attempt.
+        peer = null;
+
         // Clear keep-alive interval
         if (window.keepAliveInterval) {
             clearInterval(window.keepAliveInterval);
@@ -2753,7 +2759,7 @@ function handleOffer(offer) {
             const fileSizeMB = parseFloat((fileMetadata.size / 1024 / 1024).toFixed(2));
             const receivedMB = (totalReceived / 1024 / 1024).toFixed(2);
             const progressPercent = parseFloat(((totalReceived / fileMetadata.size) * 100).toFixed(1));
-            
+
             // Determine likely cause - prioritize file size over progress
             let errorMsg = `<strong>Connection closed unexpectedly during transfer</strong><br><br>`;
             errorMsg += `<strong>Transfer details:</strong><br>`;
