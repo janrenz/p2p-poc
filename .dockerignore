@@ -1,0 +1,28 @@
+# Dependencies – reinstalled inside the image via npm ci
+node_modules
+
+# Logs – generated at runtime, not needed in image
+*.log
+turn.log
+
+# Git metadata – not needed at runtime
+.git
+.gitignore
+.gitattributes
+
+# OS / editor noise
+.DS_Store
+.vscode
+.idea
+
+# Secrets – injected at deploy time via Coolify env vars
+.env
+.env.*
+
+# TURN server – only used for local development, not in production
+turnserver.conf
+start.sh
+start-with-turn.js
+
+# Documentation – no runtime value, keeps the image lean
+*.md

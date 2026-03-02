@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P File Sharing - Auto Mode</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .role-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .role-badge.sender {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .role-badge.receiver {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .role-badge.connecting {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        button.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        button.danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        .button-group button {
+            flex: 1;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .status.info {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .progress {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            width: 0%;
+        }
+        .hidden {
+            display: none;
+        }
+        .network-status {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        .network-status-title {
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .network-status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .network-stat {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .network-stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .network-stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        .network-stat-value.available {
+            color: #2e7d32;
+        }
+        .network-stat-value.busy {
+            color: #f57c00;
+        }
+        .sender-list {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .sender-item {
+            padding: 5px 10px;
+            margin: 3px 0;
+            border-radius: 4px;
+            background: white;
+        }
+        .sender-item.available {
+            border-left: 3px solid #2e7d32;
+        }
+        .sender-item.busy {
+            border-left: 3px solid #f57c00;
+        }
+        .sender-item-file {
+            font-size: 11px;
+            color: #666;
+            margin-top: 3px;
+        }
+        /* File Status Panel */
+        .file-status-panel {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+        }
+        .file-status-row {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 6px;
+            padding: 9px 12px;
+            margin-bottom: 5px;
+            border-left: 3px solid #e0e0e0;
+            gap: 10px;
+        }
+        .file-status-row:last-child { margin-bottom: 0; }
+        .file-status-row.idle    { border-left-color: #bdbdbd; }
+        .file-status-row.monitoring { border-left-color: #42a5f5; }
+        .file-status-row.active  { border-left-color: #ff9800; }
+        .file-status-row.complete{ border-left-color: #4caf50; }
+        .file-status-row.error   { border-left-color: #f44336; }
+        .file-status-icon { font-size: 16px; min-width: 22px; text-align: center; }
+        .file-status-info { flex: 1; min-width: 0; }
+        .file-status-name { font-size: 13px; font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .file-status-label { font-size: 11px; color: #666; margin-top: 2px; }
+        .file-status-bar { height: 3px; background: #e0e0e0; border-radius: 2px; margin-top: 5px; }
+        .file-status-bar-inner { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 2px; transition: width 0.3s; }
+
+        .video-player-section {
+            margin-top: 20px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+        .video-player-section video {
+            width: 100%;
+            border-radius: 8px;
+            max-height: 360px;
+            background: #000;
+            display: block;
+        }
+        .video-player-title {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 P2P File Sharing</h1>
+        <p class="subtitle">Auto-detecting role...</p>
+        <div id="roleBadge" class="role-badge connecting">Connecting...</div>
+
+        <!-- Network Status -->
+        <div id="networkStatus" class="network-status hidden">
+            <div class="network-status-title">🌐 Network Status</div>
+            <div class="network-status-grid">
+                <div class="network-stat">
+                    <div class="network-stat-label">Available Senders</div>
+                    <div class="network-stat-value available" id="availableSenders">0</div>
+                </div>
+                <div class="network-stat">
+                    <div class="network-stat-label">Busy Senders</div>
+                    <div class="network-stat-value busy" id="busySenders">0</div>
+                </div>
+                <div class="network-stat">
+                    <div class="network-stat-label">Total Receivers</div>
+                    <div class="network-stat-value" id="totalReceivers">0</div>
+                </div>
+            </div>
+            <div class="sender-list" id="senderList"></div>
+        </div>
+
+        <!-- Sender UI -->
+        <div id="senderUI" class="hidden">
+            <div class="section">
+                <div class="section-title">Select Files to Download &amp; Share</div>
+                <div id="senderFileSelection" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #666;">
+                        <input type="checkbox" id="senderFileCheckbox-200mb" value="/test-file-200mb.bin" style="margin-right: 8px;">
+                        Local Test File (200MB)
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #666;">
+                        <input type="checkbox" id="senderFileCheckbox-100mb" value="https://ash-speed.hetzner.com/100MB.bin" style="margin-right: 8px;">
+                        Hetzner Test File (100MB)
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #666;">
+                        <input type="checkbox" id="senderFileCheckbox-bunny" value="https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_30MB.mp4" style="margin-right: 8px;">
+                        Big Buck Bunny (30MB MP4)
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #666;">
+                        <input type="checkbox" id="senderFileCheckbox-jellyfish" value="https://test-videos.co.uk/vids/jellyfish/mp4/h264/1080/Jellyfish_1080_10s_20MB.mp4" style="margin-right: 8px;">
+                        Jellyfish (20MB MP4)
+                    </label>
+                    <div id="senderFileSelectionStatus" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+                </div>
+                <div class="button-group">
+                    <button id="downloadBtn">Download &amp; Share Selected Files</button>
+                    <button id="stopSenderBtn" class="danger" style="display: none;">Stop</button>
+                </div>
+                <div id="downloadStatus"></div>
+                <div class="progress" id="downloadProgress" style="display: none;">
+                    <div class="progress-bar" id="downloadProgressBar"></div>
+                </div>
+                <div id="shareStatus"></div>
+            </div>
+        </div>
+
+        <!-- Receiver UI -->
+        <div id="receiverUI" class="hidden">
+            <div class="section">
+                <div class="section-title">Select Files to Download</div>
+                <div id="fileSelection" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #666;">
+                        <input type="checkbox" id="fileCheckbox-200mb" value="/test-file-200mb.bin" style="margin-right: 8px;">
+                        Local Test File (200MB)
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #666;">
+                        <input type="checkbox" id="fileCheckbox-100mb" value="https://ash-speed.hetzner.com/100MB.bin" style="margin-right: 8px;">
+                        Hetzner Test File (100MB)
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #666;">
+                        <input type="checkbox" id="fileCheckbox-bunny" value="https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_30MB.mp4" style="margin-right: 8px;">
+                        Big Buck Bunny (30MB MP4)
+                    </label>
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #666;">
+                        <input type="checkbox" id="fileCheckbox-jellyfish" value="https://test-videos.co.uk/vids/jellyfish/mp4/h264/1080/Jellyfish_1080_10s_20MB.mp4" style="margin-right: 8px;">
+                        Jellyfish (20MB MP4)
+                    </label>
+                    <div id="fileSelectionStatus" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+                </div>
+                <div class="section-title">Status</div>
+                <button id="stopReceiverBtn" class="danger" style="display: none;">Stop Receiving</button>
+                <div id="receiverStatus"></div>
+                <div class="progress" id="receiverProgress" style="display: none;">
+                    <div class="progress-bar" id="receiverProgressBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Status Panel -->
+        <div id="fileStatusPanel" class="file-status-panel hidden">
+            <div class="network-status-title" style="margin-bottom:8px">Files</div>
+            <div id="fileStatusList"></div>
+        </div>
+
+        <!-- Video Player -->
+        <div id="videoPlayerSection" class="video-player-section hidden">
+            <div class="section-title">Video Preview</div>
+            <video id="videoPlayer" controls></video>
+            <div id="videoPlayerTitle" class="video-player-title"></div>
+        </div>
+
+        <!-- Manual override -->
+        <div class="section">
+            <button id="switchRoleBtn" class="secondary hidden">Switch Role</button>
+        </div>
+    </div>
+
+    <!-- RTCMultiConnection for peer management (hybrid approach) -->
+    <!-- Note: Currently using SimplePeer. RTCMultiConnection wrapper available for future migration -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/rtcmulticonnection@3.8.0/dist/RTCMultiConnection.min.js"></script> -->
+    <!-- <script src="rtc-wrapper.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
+
