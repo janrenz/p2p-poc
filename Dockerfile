@@ -30,10 +30,10 @@ USER nodeapp
 # Coolify injects PORT automatically; Traefik routes to this port.
 EXPOSE 3000
 
-# Docker / Coolify will mark the container unhealthy and restart it if
-# /health stops responding. wget is available in alpine by default.
+# Use Node.js for the healthcheck — it is always present in the image,
+# unlike wget/curl which are not guaranteed in node:alpine.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget -qO- http://localhost:3000/health || exit 1
+  CMD node -e "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
 # Use the plain "node server.js" entrypoint – no TURN server needed in
 # production (P2P is restricted to the local network via ICE filtering).
