@@ -1,7 +1,7 @@
 # ── Build stage ──────────────────────────────────────────────────────────────
 # Install only production dependencies in a clean layer so the final image
 # does not carry the npm cache or dev tooling.
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 # ── Runtime image ─────────────────────────────────────────────────────────────
-FROM node:20-alpine
+FROM node:24-alpine
 
 # Run as a non-root user (least-privilege).
 RUN addgroup -g 1001 -S nodejs && adduser -S nodeapp -u 1001
